@@ -1,0 +1,49 @@
+name: Payment CD
+
+on:
+  workflow_run:
+    workflows:
+      - Payment CI
+    types:
+      - completed
+
+jobs:
+  build-and-push-payment-image:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      (
+        github.event.workflow_run.head_branch == 'develop' ||
+        github.event.workflow_run.head_branch == 'main'
+      )
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set image tag
+        id: vars
+        run: |
+          if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=develop" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push payment Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./payment
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/payment-service:${{ steps.vars.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/payment-service:${{ github.sha }}
