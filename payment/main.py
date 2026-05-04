@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis_om import HashModel, NotFoundError
 import httpx  # Modernija zamena za requests
 import asyncio
+import os
 from database import redis # Koristi .env iz database.py 
 
 app = FastAPI(title="Order Service")
@@ -13,6 +14,8 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
+
+INVENTORY_SERVICE_URL = os.getenv("INVENTORY_SERVICE_URL", "http://localhost:8000")
 
 class Order(HashModel, index=True):
     product_id: str
