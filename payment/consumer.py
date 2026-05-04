@@ -34,3 +34,4 @@ while True:
         print(f"Consumer error: {e}")
     
     time.sleep(1)
+    
