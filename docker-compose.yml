@@ -1,0 +1,34 @@
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+
+  inventory:
+    build:
+      context: ./inventory
+    container_name: inventory-service
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD:
+    depends_on:
+      - redis
+
+  payment:
+    build:
+      context: ./payment
+    container_name: payment-service
+    ports:
+      - "8001:8001"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD:
+      INVENTORY_SERVICE_URL: http://inventory:8000
+    depends_on:
+      - redis
+      - inventory
